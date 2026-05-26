@@ -90,20 +90,45 @@
     },
     {
       "type_id": "Register",
-      "tool_prefix": "usecase",
-      "display_name": "Use Case",
+      "tool_prefix": "ai_usecase",
+      "display_name": "AI Use Case",
       "path_prefix": "Registers",
       "namespace": "openpages",
       "tool_descriptions": {
-        "upsert": "Create or update a usecase in OpenPages. Automatically determines whether to insert a new usecase or update an existing one based on provided identifiers (id, path, or name).",
-        "query": "Search and retrieve usecase from OpenPages. Supports filtering by name, owner, and custom field filters. Returns usecase details including ID, name, description, and selected fields."
+        "upsert": "Create or update an AI use case in OpenPages Register. Automatically determines whether to insert a new AI use case or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve AI use cases from OpenPages Register. Supports filtering by name, owner, and custom field filters. Returns AI use case details including ID, name, description, and selected fields."
       },
       "resource_fields": {
-        "include_all_fields": false,
-        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_usecase tool"
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_ai_usecase tool. Include all fields for comprehensive AI use case data"
       },
       "type_based_query_filters": {
-        "_comment": "USED BY: Type-based query_usecase tool ONLY. No specific filters configured"
+        "fields": [],
+        "_comment": "USED BY: Type-based query_ai_usecases tool ONLY. Add specific filter fields as needed (e.g., Status, Owner, AI Model Type, etc.)"
+      }
+    },
+    {
+      "type_id": "AuditProgram",
+      "tool_prefix": "audit",
+      "display_name": "Audit",
+      "path_prefix": "Audits",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an audit in OpenPages. Automatically determines whether to insert a new audit or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve audits from OpenPages. Supports filtering by name, owner, status, and custom field filters. Returns audit details including ID, name, description, status, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_audit tool. Include all fields for comprehensive audit data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_audits tool ONLY. Common audit filters including Status for 'Ready to Close' queries"
       }
     }
   ]

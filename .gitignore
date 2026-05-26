@@ -12,6 +12,10 @@ Thumbs.db
 .env.old
 .env.backup
 src/app/local_mcp/.env
+env/
+
+# Bob directory
+.bob/
 
 # Logs
 logs/
@@ -41,3 +45,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# virtual environments
+venv/
+.venv/
