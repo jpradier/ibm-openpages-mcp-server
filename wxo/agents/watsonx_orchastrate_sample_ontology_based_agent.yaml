@@ -65,6 +65,7 @@ collaborators: []
 tools:
 - openpages-mcp:get_resource
 - openpages-mcp:list_resources
+- openpages-mcp:openpages_query_objects
 - openpages-mcp:openpages_associate_objects
 - openpages-mcp:openpages_delete_object
 - openpages-mcp:openpages_dissociate_objects
