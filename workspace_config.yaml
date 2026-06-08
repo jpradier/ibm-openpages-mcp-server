@@ -1,0 +1,7 @@
+folder_paths:
+  agents: ./wxo/agents
+  tools: ./wxo/tools
+  connections: ./wxo/connections
+  knowledge_bases: ./wxo/knowledge-bases
+  toolkits: ./wxo/toolkits
+  models: ./wxo/models
