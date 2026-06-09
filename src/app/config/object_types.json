@@ -314,6 +314,52 @@
         ],
         "_comment": "USED BY: Type-based query_questionnaire_templates tool ONLY. Common questionnaire template filters"
       }
+    },
+    {
+      "type_id": "SectionTemplate",
+      "tool_prefix": "section_template",
+      "display_name": "Section Template",
+      "path_prefix": "SectionTemplates",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a section template in OpenPages. Automatically determines whether to insert a new section template or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve section templates from OpenPages. Supports filtering by name, owner, and custom field filters. Returns section template details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_section_template tool. Include all fields for comprehensive section template data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_section_templates tool ONLY. Common section template filters"
+      }
+    },
+    {
+      "type_id": "QuestionTemplate",
+      "tool_prefix": "question_template",
+      "display_name": "Question Template",
+      "path_prefix": "QuestionTemplates",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a question template in OpenPages. Automatically determines whether to insert a new question template or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve question templates from OpenPages. Supports filtering by name, owner, and custom field filters. Returns question template details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_question_template tool. Include all fields for comprehensive question template data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_question_templates tool ONLY. Common question template filters"
+      }
     }
   ]
 }
