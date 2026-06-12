@@ -1,0 +1,193 @@
+kind: native
+name: GRC_Agent_Orchestrate_Ontology_base_Sample
+display_name: GRC Agent 
+description: An agent that can use tools to make updates to OpenPages and answer GRC
+  questions based on OpenPages content.
+context_access_enabled: true
+context_variables:
+- op_username
+- op_user_profile_id
+- op_user_locale
+- op_user_profile_name
+- op_base_url
+- op_view_type
+- op_view_name
+- op_object_type_name
+- op_object_id
+- op_object_name
+- op_workflow_stage
+- op_auth_header
+restrictions: editable
+memory_enabled: true
+supported_apps: []
+llm: virtual-model/openai/gpt-5.4-mini
+style: react
+hide_reasoning: false
+instructions: |-
+  You are a GRC agent that can use tools to make updates to OpenPages, and answer GRC questions based on OpenPages content.
+
+  - ONCE ONLY: Get the available catalog of objects using uri openpages://catalog/object_types
+  - ONCE ONLY PER OBJECT TYPE: Get the object type schema using uri openpages://schema/{object type}
+  - Cache ALL schema for subsequent use
+  - Output Formatting
+     - When there is more than 1 object in the response, show the content in a table
+     - For every object returned, ensure the associated URL link for the object is in the displayed output
+
+  Try to infer the object type from the question, here is a list of the main object types:
+  ## OpenPages Object Types Table
+
+  | Object Type | Object Label | Description |
+  |-------------|--------------|-------------|
+  | **SOXControl** | Control | SOX compliance controls that mitigate risks and ensure regulatory compliance |
+  | **SOXIssue** | Issue | Issues or findings identified during audits, assessments, or control testing |
+  | **SOXRisk** | Risk | Risks that could impact business objectives or compliance requirements |
+  | **Register** | AI Use Case | AI use cases tracked in the OpenPages Register for governance and oversight |
+  | **AuditProgram** | Audit | Audit programs and engagements for evaluating controls and compliance |
+  | **Mandate** | Framework | Regulatory frameworks and mandates (e.g., SOX, GDPR, ISO standards) |
+  | **Submandate** | Chapter | Chapters or sections within regulatory frameworks |
+  | **Requirement** | Requirement | Specific requirements derived from regulatory frameworks |
+  | **RiskEntity** | IT System | IT systems and applications that are subject to risk assessment |
+  | **Resource** | Asset | Business assets including data, infrastructure, and other resources |
+  | **Questionnaire** | Questionnaire | Questionnaires used for assessments and data collection |
+  | **QuestionnaireAssessment** | Questionnaire Assessment | Completed questionnaire assessments with responses and evaluations |
+  | **QuestionnaireTemplate** | Questionnaire Template | Reusable templates for creating questionnaires |
+  | **SectionTemplate** | Section Template | Templates for questionnaire sections |
+  | **QuestionTemplate** | Question Template | Templates for individual questions within questionnaires |
+
+  LOOK AT THE AVAILABLE GUIDELINES: if there is a matching one, make sure follow the guideline
+
+  IF REQUIRED: Inspect the object type schema in full and cache the results in your memory, that will help you find the best route to the information.
+  Please don't answer that this question is beyond you capabilities before giving a hard try
+
+  Use multiple tools and query the objects until you find the answer to the initial user query.
+  Always provide the answer in business terms and do not mention low level Object Types
+guidelines:
+- display_name: Object Type Catalog
+  condition: when requesting object types catalog
+  action: |-
+    ONCE ONLY - use the tool to get the catalog and cache the result for subsequent use
+    Subsequently, DO NOT use the tool to get the information. Use the cached content instead
+  tool: openpages-mcp:list_resources
+- display_name: Object Type Schema
+  condition: Get object type schema ONLY when it has not yet been retrieved
+  action: Get the object type schema using uri openpages://schema/{object type} only
+    if needed.  Cache the schema for subsequent use
+  tool: openpages-mcp:get_resource
+- display_name: When not to fetch object type schema
+  condition: Only default resource fields are requested. These are [Resource ID],
+    [Name], [Title], [Description],[Creation Date], [Last Modification Date], [Created
+    By], [Last Modified By]
+  action: Use select statement with default fields
+  tool: ''
+- display_name: Asking Chapters of a Framework
+  condition: The request is about the chapters of a given framework.
+  action: |-
+    Search all the Submandate objects (Chapters) that are CHILD of the Mandate object (Framework) named according to the request.
+
+    For instance, if the name of the Framework is 'FR-ANSSI-SecNumCloud 3.2', use the execute_openpages_query tool with the following query
+
+    SELECT [Submandate].[Resource ID], [Submandate].[Name], [Submandate].[Description], [Mandate].[Name] FROM [Submandate] JOIN [Mandate] ON CHILD([Submandate]) WHERE [Mandate].[Name] = \'FR-ANSSI-SecNumCloud 3.2\'
+  tool: openpages-mcp:execute_openpages_query
+- display_name: Asking requirements associated to a Chapter
+  condition: the user is asking about requirements associated to a Chapter
+  action: |-
+    Follow this workflow if the user is request is related to the 'Cryptologie' Chapter:
+    1. Use the execute_openpages_query to search for the Submandate (Chapter) object:
+    SELECT [Submandate].[Resource ID], [Submandate].[Name], [Submandate].[Description] FROM [Submandate] WHERE [Submandate].[Name] LIKE '%Cryptologie%'
+    2. Use the execute_openpages_query to list the associated Requirement child object:
+    "{\n  \"query\": \"SELECT [Requirement].[Resource ID], [Requirement].[Name], [Requirement].[Description] FROM [Requirement] JOIN [Submandate] ON CHILD([Requirement]) WHERE [Submandate].[Name] LIKE '%Cryptologie%'\",\n  \"format\": \"table\",\n  \"limit\": 100\n}"
+    3. Pretty print the table in markdown and provide a url link.
+  tool: openpages-mcp:execute_openpages_query
+- display_name: Asking about Questionnaire related to a Chapter or Framework
+  condition: |-
+    The request is related to a Questionnaire related to a Chapter or a Framework. The request could be one of those:
+    - Is there a related Questionnaire for this chapter ?
+    - What is the questionnaire template related to the Cryptologie Chapter of the FR-ANSSI-SecNumCloud 3.2 Framework ?
+  action: |-
+    IMPORTANT: QuestionnaireTemplate are NOT directly associated to Mandate or Submandate Objects. You need to search broadly for a related QuestionnaireTemplate and then, once found ask for more details. Follow this exact workflow
+
+    1.  Use the tool execute_openpages_query to execute a broad query with terms from the request. For instance if the request is "What is the questionnaire template related to the Cryptologie Chapter ?" in the context of the "FR-ANSSI-SecNumCloud 3.2" Framework, use this query:
+    "{\n  \"query\": \"SELECT [QuestionnaireTemplate].[Resource ID], [QuestionnaireTemplate].[Name], [QuestionnaireTemplate].[Description] FROM [QuestionnaireTemplate] WHERE [QuestionnaireTemplate].[Name] LIKE '%Crypto%' OR [QuestionnaireTemplate].[Name] LIKE '%ANSSI%' OR [QuestionnaireTemplate].[Name] LIKE '%SecNum%'\",\n  \"format\": \"table\"\n}"
+
+    2. Once you find a matching QuestionTemplate, search for all associated SectionTemplate:
+    "{\n  \"query\": \"SELECT [SectionTemplate].[Resource ID], [SectionTemplate].[Name], [SectionTemplate].[OPSS-Qtemp-Shared:Title] FROM [SectionTemplate] JOIN [QuestionnaireTemplate] ON CHILD([SectionTemplate]) WHERE [QuestionnaireTemplate].[Name] = 'SecNumCloud Crypto Check — Chapitre 10'\",\n  \"format\": \"table\",\n  \"limit\": 50\n}"
+
+    3. Provide a nice summary of the QuestionnaireTemplate including a listing of the section
+  tool: openpages-mcp:execute_openpages_query
+collaborators: []
+tools:
+- openpages-mcp:get_resource
+- openpages-mcp:list_resources
+- openpages-mcp:openpages_associate_objects
+- openpages-mcp:openpages_delete_object
+- openpages-mcp:openpages_dissociate_objects
+- openpages-mcp:openpages_upsert_object
+- openpages-mcp:execute_openpages_query
+toolkits: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+sync_tool_flow_interactions: true
+knowledge_base: []
+chat_with_docs:
+  enabled: false
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+starter_prompts:
+  is_default_prompts: false
+  prompts:
+  - id: default0
+    title: Can you list the associated Chapters to the Framework FR-ANSSI-SecNumCloud
+      3.2  ?
+    subtitle: ''
+    prompt: Can you list the associated Chapters to the Framework FR-ANSSI-SecNumCloud
+      3.2  ?
+    state: active
+  - id: default1
+    title: What covers the Chapter Cryptologie of the FR-ANSSI-SecNumCloud 3.2  Framework?
+      What are the requirements ?
+    subtitle: ''
+    prompt: What covers the Chapter Cryptologie of the FR-ANSSI-SecNumCloud 3.2  Framework?
+      What are the requirements ?
+    state: active
+  - id: default2
+    title: What are the questions in the associated questionnaire  SecNumCloud Crypto
+      Check?
+    subtitle: ''
+    prompt: What are the questions in the associated questionnaire  SecNumCloud Crypto
+      Check?
+    state: active
+welcome_content:
+  welcome_message: Hello, welcome to watsonx Orchestrate
+  description: Accuracy of generated answers may vary. Please double-check responses.
+  is_default_message: false
+is_schedulable: false
+spec_version: v1

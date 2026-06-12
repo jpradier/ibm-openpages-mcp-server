@@ -360,6 +360,145 @@
         ],
         "_comment": "USED BY: Type-based query_question_templates tool ONLY. Common question template filters"
       }
+    },
+    {
+      "type_id": "AuditPhase",
+      "tool_prefix": "audit_phase",
+      "display_name": "Audit Section",
+      "path_prefix": "AuditPhases",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an audit section in OpenPages. Automatically determines whether to insert a new audit section or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve audit sections from OpenPages. Supports filtering by name, owner, status, and custom field filters. Returns audit section details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_audit_phase tool. Include all fields for comprehensive audit section data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_audit_phases tool ONLY. Common audit section filters"
+      }
+    },
+    {
+      "type_id": "Workpaper",
+      "tool_prefix": "workpaper",
+      "display_name": "Workpaper",
+      "path_prefix": "Workpapers",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a workpaper in OpenPages. Automatically determines whether to insert a new workpaper or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve workpapers from OpenPages. Supports filtering by name, owner, status, and custom field filters. Returns workpaper details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_workpaper tool. Include all fields for comprehensive workpaper data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_workpapers tool ONLY. Common workpaper filters"
+      }
+    },
+    {
+      "type_id": "Finding",
+      "tool_prefix": "finding",
+      "display_name": "Finding",
+      "path_prefix": "Findings",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a finding in OpenPages. Automatically determines whether to insert a new finding or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve findings from OpenPages. Supports filtering by name, owner, status, severity, and custom field filters. Returns finding details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_finding tool. Include all fields for comprehensive finding data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner",
+          "Severity"
+        ],
+        "_comment": "USED BY: Type-based query_findings tool ONLY. Common finding filters including severity"
+      }
+    },
+    {
+      "type_id": "ReviewComment",
+      "tool_prefix": "review_comment",
+      "display_name": "Review Comment",
+      "path_prefix": "ReviewComments",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a review comment in OpenPages. Automatically determines whether to insert a new review comment or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve review comments from OpenPages. Supports filtering by name, owner, and custom field filters. Returns review comment details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_review_comment tool. Include all fields for comprehensive review comment data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_review_comments tool ONLY. Common review comment filters"
+      }
+    },
+    {
+      "type_id": "AuditableEntity",
+      "tool_prefix": "auditable_entity",
+      "display_name": "Auditable Entity",
+      "path_prefix": "AuditableEntities",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an auditable entity in OpenPages. Automatically determines whether to insert a new auditable entity or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve auditable entities from OpenPages. Supports filtering by name, owner, and custom field filters. Returns auditable entity details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_auditable_entity tool. Include all fields for comprehensive auditable entity data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_auditable_entities tool ONLY. Common auditable entity filters"
+      }
+    },
+    {
+      "type_id": "SummaryAuditPlan",
+      "tool_prefix": "summary_audit_plan",
+      "display_name": "Summary Audit Plan",
+      "path_prefix": "SummaryAuditPlans",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a summary audit plan in OpenPages. Automatically determines whether to insert a new audit plan or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve summary audit plans from OpenPages. Supports filtering by name, owner, status, and custom field filters. Returns audit plan details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_audit_plan tool. Include all fields for comprehensive audit plan data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_audit_plans tool ONLY. Common audit plan filters"
+      }
     }
   ]
 }
