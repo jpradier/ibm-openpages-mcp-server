@@ -499,6 +499,59 @@
         ],
         "_comment": "USED BY: Type-based query_audit_plans tool ONLY. Common audit plan filters"
       }
+    },
+    {
+      "type_id": "RiskAssessment",
+      "tool_prefix": "risk_assessment",
+      "display_name": "Risk Assessment Campaign",
+      "path_prefix": "Risk Assessments",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a risk assessment campaign in OpenPages. Automatically determines whether to insert a new risk assessment or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve risk assessment campaigns from OpenPages. Supports filtering by name, owner, status, and custom field filters. Returns risk assessment details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [
+          "@OPSS-RA",
+          "@Demo-RA",
+          "@RCM-RA"
+        ],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_risk_assessment tool. Include all field groups for comprehensive risk assessment data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "OPSS-RA:Status",
+          "RCM-RA:Owner"
+        ],
+        "_comment": "USED BY: Type-based query_risk_assessments tool ONLY. Common risk assessment filters"
+      }
+    },
+    {
+      "type_id": "Vulnerability",
+      "tool_prefix": "vulnerability",
+      "display_name": "Vulnerability",
+      "path_prefix": "Vulnerabilities",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a vulnerability in OpenPages. Automatically determines whether to insert a new vulnerability or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve vulnerabilities from OpenPages. Supports filtering by name, owner, status, and custom field filters. Returns vulnerability details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [
+          "@Demo-Vulner",
+          "@External System - Application Vulnerability"
+        ],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_vulnerability tool. Include all field groups for comprehensive vulnerability data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Demo-Vulner:Status",
+          "Demo-Vulner:Owner"
+        ],
+        "_comment": "USED BY: Type-based query_vulnerabilities tool ONLY. Common vulnerability filters"
+      }
     }
   ]
 }

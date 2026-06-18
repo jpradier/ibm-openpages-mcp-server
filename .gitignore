@@ -49,3 +49,5 @@ wheels/
 # virtual environments
 venv/
 .venv/
+
+templates/
