@@ -16,7 +16,6 @@ context_variables:
 - op_object_id
 - op_object_name
 - op_workflow_stage
-- op_auth_header
 restrictions: editable
 memory_enabled: false
 supported_apps: []
@@ -33,18 +32,19 @@ instructions: |-
      - When there is more than 1 object in the response, show the content in a table
      - For every object returned, ensure the associated URL link for the object is in the displayed output
   You have access to the following context variables from OpenPages to inform your decisions - use them only if they are set with values:
-  op_username - {op_username}
   op_user_profile_id - {op_user_profile_id}
   op_user_locale - {op_user_locale}
   op_user_profile_name - {op_user_profile_name}
-  op_base_url - {op_base_url}
   op_view_type - {op_view_type}
   op_view_name - {op_view_name}
   op_object_type_name - {op_object_type_name}
   op_object_id - {op_object_id}
   op_object_name - {op_object_name}
   op_workflow_stage - {op_workflow_stage}
-  op_auth_header - {op_auth_header}
+  op_auth_header and op_openpages_url are not required because the MCP server has these defined in his environment.
+
+  When generating clickable link in your answer, please always use this url http://useast.services.cloud.techzone.ibm.com:27238/openpages/app/jspview/react/grc/task-view/<ResourceId>
+  Also target the current window.
 guidelines:
 - display_name: Object Type Catalog
   condition: when requesting object types catalog

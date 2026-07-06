@@ -8,6 +8,7 @@ import logging
 import base64
 import time
 import ssl
+from urllib.parse import urlparse
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import httpx  # type: ignore
@@ -85,19 +86,22 @@ class OpenPagesClient:
     
     def __init__(self, base_url: str, auth_type: str = "basic", username: Optional[str] = None,
                  password: Optional[str] = None, api_key: Optional[str] = None, authentication_url: Optional[str] = None,
-                 custom_settings: Optional[Settings] = None, instance_name: Optional[str] = None):
+                 custom_settings: Optional[Settings] = None, instance_name: Optional[str] = None,
+                 oidc_client_id: Optional[str] = None, oidc_client_secret: Optional[str] = None):
         """
         Initialize the OpenPages client
         
         Args:
             base_url: Base URL of the OpenPages API
             auth_type: Authentication type, either "basic" or "bearer"
-            username: OpenPages username (required if auth_type is "basic" or for CP4D)
-            password: OpenPages password (required if auth_type is "basic" or for CP4D)
+            username: OpenPages username (required if auth_type is "basic" or for CP4D/OIDC)
+            password: OpenPages password (required if auth_type is "basic" or for CP4D/OIDC)
             api_key: API key for bearer authentication (required if auth_type is "bearer" for IBM Cloud/MCSP)
             authentication_url: Authentication URL for bearer authentication
             custom_settings: Optional custom settings object to use instead of global settings
             instance_name: OpenPages instance name for CP4D deployments (e.g., 'openpagesinstance-with-25')
+            oidc_client_id: Optional OAuth2 client_id for OIDC/Keycloak deployments
+            oidc_client_secret: Optional OAuth2 client_secret for OIDC/Keycloak deployments
         """
         # Use provided settings or fall back to global settings
         self.settings = custom_settings if custom_settings else settings
@@ -106,21 +110,35 @@ class OpenPagesClient:
         if auth_type.lower() == "basic":
             if not username or not password:
                 raise ValueError("Username and password are required for basic authentication")
+        elif auth_type.lower() == "cookie":
+            # Cookie auth requires no credentials here — cookies are read from settings
+            pass
         elif auth_type.lower() == "bearer":
             if not authentication_url:
                 raise ValueError("Authentication URL is required for bearer authentication")
-            # Detect if this is CP4D authentication by checking URL pattern
-            is_cp4d = '/icp4d-api/v1/authorize' in authentication_url in authentication_url
-            if is_cp4d:
-                # CP4D uses username/password
+            from src.app.auth.token_exchange import detect_auth_type as _detect
+            _detected = _detect(authentication_url)
+            if _detected == 'cp4d':
                 if not username or not password:
                     raise ValueError("Username and password are required for CP4D authentication")
+            elif _detected == 'oidc':
+                # OIDC requires either username+password or client_id+client_secret
+                _oidc_cid = oidc_client_id or (self.settings.OPENPAGES_OIDC_CLIENT_ID if custom_settings is None else "")
+                _oidc_cs = oidc_client_secret or (self.settings.OPENPAGES_OIDC_CLIENT_SECRET if custom_settings is None else "")
+                has_user_creds = username and password
+                has_client_creds = _oidc_cid and _oidc_cs
+                if not has_user_creds and not has_client_creds and not api_key:
+                    raise ValueError(
+                        "OIDC authentication requires either:\n"
+                        "  - OPENPAGES_USERNAME + OPENPAGES_PASSWORD (password grant), or\n"
+                        "  - OPENPAGES_OIDC_CLIENT_ID + OPENPAGES_OIDC_CLIENT_SECRET (client_credentials grant)"
+                    )
             else:
                 # IBM Cloud IAM and MCSP use API key
                 if not api_key:
                     raise ValueError("API key is required for bearer authentication (IBM Cloud/MCSP)")
         else:
-            raise ValueError("Authentication type must be either 'basic' or 'bearer'")
+            raise ValueError("Authentication type must be 'basic', 'bearer', or 'cookie'")
             
         # Ensure the base URL has the correct protocol
         if base_url and not (base_url.startswith('http://') or base_url.startswith('https://')):
@@ -136,6 +154,8 @@ class OpenPagesClient:
         self.password = password
         self.api_key = api_key
         self.authentication_url = authentication_url
+        self.oidc_client_id = oidc_client_id or getattr(self.settings, 'OPENPAGES_OIDC_CLIENT_ID', '') or None
+        self.oidc_client_secret = oidc_client_secret or getattr(self.settings, 'OPENPAGES_OIDC_CLIENT_SECRET', '') or None
         
         # Set initial headers without Authorization
         self.headers = {
@@ -167,10 +187,34 @@ class OpenPagesClient:
         self._http_client: Optional[httpx.AsyncClient] = None
         self._http_client_lock = asyncio.Lock()
 
-        # For basic auth, we can set the auth header immediately
+        # For basic auth, set the Authorization header immediately (synchronous)
         if self.auth_type == "basic":
             self.auth_header = self._create_basic_auth_header(username, password)
             self.headers['Authorization'] = self.auth_header
+        # For cookie auth: prefer static cookies from OPENPAGES_SESSION_COOKIES;
+        # if absent but username+password are set, auto-login will run in initialize_auth().
+        elif self.auth_type == "cookie":
+            raw_cookies = getattr(self.settings, 'OPENPAGES_SESSION_COOKIES', '')
+            if raw_cookies:
+                from src.app.auth.token_exchange import parse_cookie_string
+                self._session_cookies: dict = parse_cookie_string(raw_cookies)
+                logger.info(
+                    f"Cookie auth: loaded {len(self._session_cookies)} static cookie(s): "
+                    f"{', '.join(self._session_cookies.keys())}"
+                )
+            else:
+                # No static cookies — will auto-login in initialize_auth()
+                self._session_cookies = {}
+                if self.username and self.password:
+                    logger.info(
+                        "Cookie auth: no static OPENPAGES_SESSION_COOKIES set; "
+                        "will auto-login with OPENPAGES_USERNAME/PASSWORD on first request."
+                    )
+                else:
+                    logger.warning(
+                        "Cookie auth: neither OPENPAGES_SESSION_COOKIES nor "
+                        "OPENPAGES_USERNAME/PASSWORD are set — all API calls will fail."
+                    )
         # For bearer auth, we'll set it later in an async method
     
     def _extract_instance_name(self, base_url: str) -> str:
@@ -213,23 +257,47 @@ class OpenPagesClient:
             logger.error(f"Error extracting instance name: {e}, using 'instance' as default")
             return 'instance'
     
-    def _get_api_path(self, endpoint: str) -> str:
+    def _get_api_url(self, endpoint: str) -> str:
         """
-        Get the correct API path based on deployment type (CP4D vs standard).
-        
+        Build the full URL for an API call.
+
+        Resolution order for the base of the API URL:
+          1. When OPENPAGES_API_ROOT is set: use scheme+host from OPENPAGES_BASE_URL
+             (path is stripped) then append OPENPAGES_API_ROOT + endpoint.
+             This allows OPENPAGES_BASE_URL to carry the web-app context path used
+             for cookie login (e.g. /openpages) while the REST API lives at a
+             different path (e.g. /opgrc/api/v2/...).
+          2. CP4D: append "-opgrc" directly to base_url (base URL contains instance path)
+          3. Standard: append "/opgrc" to base_url
+
+        Examples:
+          OPENPAGES_BASE_URL=https://host/openpages  OPENPAGES_API_ROOT=/opgrc
+            → https://host/opgrc/api/v2/...
+
+          OPENPAGES_BASE_URL=https://host  (no API_ROOT)
+            → https://host/opgrc/api/v2/...
+
+          OPENPAGES_BASE_URL=https://host/openpages  (no API_ROOT)
+            → https://host/openpages/opgrc/api/v2/...
+
         Args:
-            endpoint: The API endpoint (e.g., '/api/v2/query')
-            
+            endpoint: The API endpoint path, e.g. '/api/v2/query'
+
         Returns:
-            Full API path with correct prefix
+            Full absolute URL for the API call
         """
+        api_root = getattr(self.settings, 'OPENPAGES_API_ROOT', '') or ''
+        if api_root:
+            # Strip any path from base_url — use scheme + host (+ port) only
+            parsed = urlparse(self.base_url)
+            host_root = f"{parsed.scheme}://{parsed.netloc}"
+            return f"{host_root}{api_root.rstrip('/')}{endpoint}"
+
         if self.is_cp4d:
-            # CP4D: Just append -opgrc to base URL, then add the endpoint
-            # Base URL already contains the instance path (e.g., /openpages-xxx)
-            return f"-opgrc{endpoint}"
-        else:
-            # Standard OpenPages uses: /opgrc/api/v2/...
-            return f"/opgrc{endpoint}"
+            return f"{self.base_url}-opgrc{endpoint}"
+
+        return f"{self.base_url}/opgrc{endpoint}"
+
     
     def _create_basic_auth_header(self, username: Optional[str], password: Optional[str]) -> str:
         """
@@ -309,7 +377,8 @@ class OpenPagesClient:
             Optional[str]: The access token if successful, None otherwise
         """
         from src.app.auth.token_exchange import (
-            detect_auth_type, fetch_ibm_cloud_token, fetch_mcsp_token, fetch_cp4d_token
+            detect_auth_type, fetch_ibm_cloud_token, fetch_mcsp_token,
+            fetch_cp4d_token, fetch_oidc_token
         )
 
         auth_type = detect_auth_type(authentication_url)
@@ -318,6 +387,16 @@ class OpenPagesClient:
             if auth_type == 'cp4d':
                 return await fetch_cp4d_token(
                     self.username, self.password, authentication_url, self.settings.SSL_VERIFY
+                )
+            elif auth_type == 'oidc':
+                return await fetch_oidc_token(
+                    auth_url=authentication_url,
+                    username=self.username or None,
+                    password=self.password or None,
+                    api_key=api_key or None,
+                    client_id=self.oidc_client_id,
+                    client_secret=self.oidc_client_secret,
+                    ssl_verify=self.settings.SSL_VERIFY,
                 )
             elif auth_type == 'ibm_cloud':
                 return await fetch_ibm_cloud_token(api_key, authentication_url)
@@ -331,12 +410,12 @@ class OpenPagesClient:
     async def initialize_auth(self):
         """
         Initialize authentication asynchronously.
-        This must be called before making any API requests when using bearer authentication.
-        Uses double-checked locking to prevent concurrent token fetches.
+        - bearer: fetches token on first call (double-checked lock).
+        - cookie: if no static cookies, performs the 3-step form-login to obtain session cookies.
+        - basic:  already done synchronously in __init__.
         """
         if self.auth_type == "bearer" and 'Authorization' not in self.headers:
             async with self._auth_lock:
-                # Re-check after acquiring lock — another coroutine may have already initialized
                 if 'Authorization' not in self.headers:
                     logger.info("Initializing bearer authentication")
                     self.auth_header = await self._create_bearer_auth_header(self.api_key, self.authentication_url)
@@ -344,12 +423,43 @@ class OpenPagesClient:
                     logger.info("Bearer authentication initialized successfully")
                 else:
                     logger.debug("Auth was initialized by another coroutine while waiting for lock")
+        elif self.auth_type == "cookie" and not self._session_cookies:
+            async with self._auth_lock:
+                # Re-check: another coroutine may have already logged in
+                if not self._session_cookies:
+                    await self._cookie_login()
         else:
-            logger.debug(f"Auth already initialized or using basic auth (type: {self.auth_type})")
+            logger.debug(f"Auth already initialized (type: {self.auth_type})")
+
+    async def _cookie_login(self):
+        """
+        Perform the OpenPages form-based login and populate self._session_cookies.
+        Must be called while holding self._auth_lock.
+        """
+        if not self.username or not self.password:
+            raise RuntimeError(
+                "Cookie auth auto-login requires OPENPAGES_USERNAME and OPENPAGES_PASSWORD. "
+                "Set them in your .env or supply OPENPAGES_SESSION_COOKIES directly."
+            )
+        from src.app.auth.token_exchange import fetch_openpages_session_cookies
+        logger.info(f"Cookie auth: performing auto-login for user '{self.username}'")
+        self._session_cookies = await fetch_openpages_session_cookies(
+            base_url=self.base_url,
+            username=self.username,
+            password=self.password,
+            ssl_verify=self.settings.SSL_VERIFY,
+        )
+        logger.info(
+            f"Cookie auth: auto-login succeeded, session active "
+            f"(cookies: {', '.join(self._session_cookies.keys())})"
+        )
 
     async def _get_request_headers(self, auth_override: Optional[str] = None) -> Dict[str, str]:
         """
         Get headers for an API request, optionally overriding the Authorization header.
+
+        For cookie auth the ``Cookie`` header is built from the session cookies dict.
+        For bearer/basic auth the ``Authorization`` header is used.
 
         Args:
             auth_override: If provided, replaces the Authorization header for this request.
@@ -361,6 +471,15 @@ class OpenPagesClient:
         if auth_override:
             headers = self.headers.copy()
             headers['Authorization'] = auth_override
+            return headers
+        elif self.auth_type == "cookie":
+            headers = self.headers.copy()
+            # Remove any Authorization header that might have leaked in
+            headers.pop('Authorization', None)
+            if self._session_cookies:
+                headers['Cookie'] = '; '.join(
+                    f"{k}={v}" for k, v in self._session_cookies.items()
+                )
             return headers
         else:
             await self.initialize_auth()
@@ -459,7 +578,48 @@ class OpenPagesClient:
                 try:
                     response = await client.request(method, url, headers=request_headers, **kwargs)
                     response.raise_for_status()
-                    
+
+                    # Detect SSO/WebSEAL redirect masquerading as HTTP 200.
+                    # The SSO layer returns the login page with status 200 and
+                    # Content-Type: text/html when the session/token is invalid.
+                    _ct = response.headers.get("content-type", "")
+                    if "text/html" in _ct:
+                        if self.auth_type == "cookie" and self.username and self.password:
+                            # Session expired — re-login automatically and retry once
+                            logger.warning(
+                                f"Cookie session expired for {method} {url}. "
+                                "Re-logging in automatically..."
+                            )
+                            async with self._auth_lock:
+                                self._session_cookies = {}
+                                await self._cookie_login()
+                            retry_headers = await self._get_request_headers(auth_override)
+                            response = await client.request(method, url, headers=retry_headers, **kwargs)
+                            response.raise_for_status()
+                            # If still HTML after re-login, give up with a clear error
+                            if "text/html" in response.headers.get("content-type", ""):
+                                raise RuntimeError(
+                                    f"Re-login succeeded but API still returned HTML for "
+                                    f"{method} {url}. Check user permissions in OpenPages."
+                                )
+                        elif self.auth_type == "cookie":
+                            raise RuntimeError(
+                                f"OpenPages session cookies have expired or are invalid "
+                                f"({method} {url}, status {response.status_code}). "
+                                "Set OPENPAGES_USERNAME and OPENPAGES_PASSWORD in your .env "
+                                "for automatic re-login, or update OPENPAGES_SESSION_COOKIES manually."
+                            )
+                        else:
+                            _preview = response.text[:300].replace("\n", " ")
+                            raise RuntimeError(
+                                f"OpenPages API returned an HTML page instead of JSON for "
+                                f"{method} {url} (status {response.status_code}, "
+                                f"Content-Type: {_ct}). "
+                                "This usually means the bearer token is invalid or expired, "
+                                "or the SSO provider requires a different token type. "
+                                f"Response preview: {_preview}"
+                            )
+
                     # Add response attributes
                     duration_ms = (time.monotonic() - t_start) * 1000
                     if span and is_tracing_enabled():
@@ -610,8 +770,7 @@ class OpenPagesClient:
             "honor_primary": False
         }
 
-        api_path = self._get_api_path("/api/v2/query")
-        full_url = f"{self.base_url}{api_path}"
+        full_url = self._get_api_url("/api/v2/query")
         logger.info(f"OpenPages API Query Request: {full_url}")
         logger.info(f"Request Body: {request_body}")
 
@@ -620,6 +779,9 @@ class OpenPagesClient:
             response = await self._request_with_auth_retry(
                 "POST", full_url, auth_override=auth_override, json=request_body, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from query endpoint (status {response.status_code})")
+                return {}
             response_json = response.json()
 
             # Log the response, but truncate if too large
@@ -658,14 +820,16 @@ class OpenPagesClient:
         logger.info(f"Getting content for resource ID: {resource_id}")
 
 
-        api_path = self._get_api_path(f"/api/v2/contents/{resource_id}")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/contents/{resource_id}")
         logger.debug(f"OpenPages API Get Content Request: {url}")
 
         try:
             response = await self._request_with_auth_retry(
                 "GET", url, auth_override=auth_override, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from get_content endpoint (status {response.status_code})")
+                return {}
             response_json = response.json()
 
             # Log the response, but truncate if too large
@@ -702,14 +866,16 @@ class OpenPagesClient:
         logger.info(f"Creating content of type: {content_data.get('type_definition_id', 'unknown')}")
 
 
-        api_path = self._get_api_path("/api/v2/contents")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url("/api/v2/contents")
         logger.debug(f"OpenPages API Create Content Request: {url}")
         logger.debug(f"Request Body: {content_data}")
         try:
             response = await self._request_with_auth_retry(
                 "POST", url, auth_override=auth_override, json=content_data, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from create_content endpoint (status {response.status_code})")
+                return {}
             response_json = response.json()
 
             # Log the response, but truncate if too large
@@ -747,8 +913,7 @@ class OpenPagesClient:
         logger.info(f"Updating content: {resource_id} (type: {content_data.get('type_definition_id', 'unknown')})")
 
 
-        api_path = self._get_api_path(f"/api/v2/contents/{resource_id}")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/contents/{resource_id}")
         logger.debug(f"OpenPages API Update Content Request: {url}")
         logger.debug(f"Request Body: {content_data}")
 
@@ -756,6 +921,9 @@ class OpenPagesClient:
             response = await self._request_with_auth_retry(
                 "PUT", url, auth_override=auth_override, json=content_data, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from update_content endpoint (status {response.status_code})")
+                return {}
             response_json = response.json()
 
             # Log the response, but truncate if too large
@@ -826,14 +994,16 @@ class OpenPagesClient:
             Type definition data including field definitions
         """
         
-        api_path = self._get_api_path(f"/api/v2/types/{type_name}")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/types/{type_name}")
         logger.info(f"OpenPages API Get Type Definition Request: {url}")
 
         try:
             response = await self._request_with_auth_retry(
                 "GET", url, auth_override=auth_override, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from get_type_definition for {type_name} (status {response.status_code})")
+                return {}
             response_json = response.json()
 
             # Log the response, but truncate if too large
@@ -854,6 +1024,14 @@ class OpenPagesClient:
         except httpx.RequestError as e:
             logger.error(f"Request error getting type definition: {e}")
             raise
+        except Exception as e:
+            # `response` may not be bound if the exception occurred before the HTTP call
+            # returned (e.g. UnicodeEncodeError building the request headers).
+            _status = response.status_code if 'response' in dir() else 'N/A'
+            _body   = (response.text[:500] if response.text else '<empty>') if 'response' in dir() else '<no response>'
+            logger.error(f"Unexpected error for {type_name} (status {_status}): {e}")
+            logger.error(f"Response body preview: {_body}")
+            raise
     
     async def get_type_associations(self, type_name: str, auth_override: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -867,16 +1045,18 @@ class OpenPagesClient:
             Type association data including parent and child relationships
         """
         
-        api_path = self._get_api_path(f"/api/v2/types/{type_name}/associations?includeLocalizedLabels=false")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/types/{type_name}/associations?includeLocalizedLabels=false")
         logger.info(f"OpenPages API Get Type Associations Request: {url}")
 
         try:
             response = await self._request_with_auth_retry(
                 "GET", url, auth_override=auth_override, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from get_type_associations for {type_name} (status {response.status_code})")
+                return {}
             response_json = response.json()
-            
+
             # Log the response, but truncate if too large
             if settings.DEBUG:
                 logger.info(f"OpenPages API Get Type Associations Response Status: {response.status_code}")
@@ -920,14 +1100,16 @@ class OpenPagesClient:
         filter_param = f'emails eq "{email}"'
         encoded_filter = urllib.parse.quote(filter_param)
 
-        api_path = self._get_api_path(f"/api/v2/scim/Users?filter={encoded_filter}")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/scim/Users?filter={encoded_filter}")
         logger.debug(f"OpenPages SCIM Users API Request: {url}")
 
         try:
             response = await self._request_with_auth_retry(
                 "GET", url, auth_override=auth_override, timeout=30.0
             )
+            if not response.text:
+                logger.warning(f"Empty response body from SCIM users endpoint (status {response.status_code})")
+                return None
             response_json = response.json()
 
             # Log the response
@@ -972,8 +1154,7 @@ class OpenPagesClient:
         """
         logger.info(f"Deleting content: {resource_id}")
         
-        api_path = self._get_api_path(f"/api/v2/contents/{resource_id}")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/contents/{resource_id}")
         logger.debug(f"OpenPages API Delete Content Request: {url}")
 
         try:
@@ -1028,8 +1209,7 @@ class OpenPagesClient:
         logger.info(f"Adding {len(associations)} association(s) to resource: {resource_id}")
         
         
-        api_path = self._get_api_path(f"/api/v2/contents/{resource_id}/associations")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/contents/{resource_id}/associations")
         logger.debug(f"OpenPages API Add Associations Request: {url}")
         
         # Validate associations
@@ -1191,8 +1371,7 @@ class OpenPagesClient:
             query_params[param_name] = ",".join(ids)
             logger.debug(f"Removing {len(ids)} {rel_type} association(s): {ids}")
         
-        api_path = self._get_api_path(f"/api/v2/contents/{resource_id}/associations")
-        url = f"{self.base_url}{api_path}"
+        url = self._get_api_url(f"/api/v2/contents/{resource_id}/associations")
         logger.debug(f"OpenPages API Remove Associations Request: {url}")
         if self.settings.DEBUG:
             logger.debug(f"Query parameters: {query_params}")

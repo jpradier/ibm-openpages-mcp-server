@@ -4,18 +4,15 @@ display_name: GRC Agent - Orchestrate - Ontology based - Sample
 description: An agent that can use tools to make updates to OpenPages and answer GRC questions based on OpenPages content.
 context_access_enabled: true
 context_variables:
-- op_username
 - op_user_profile_id
 - op_user_locale
 - op_user_profile_name
-- op_base_url
 - op_view_type
 - op_view_name
 - op_object_type_name
 - op_object_id
 - op_object_name
 - op_workflow_stage
-- op_auth_header
 restrictions: editable
 supported_apps: []
 llm: groq/openai/gpt-oss-120b
@@ -31,18 +28,15 @@ instructions: |-
      - When there is more than 1 object in the response, show the content in a table
      - For every object returned, ensure the associated URL link for the object is in the displayed output
   You have access to the following context variables from OpenPages to inform your decisions - use them only if they are set with values:
-  op_username - {op_username}
   op_user_profile_id - {op_user_profile_id}
   op_user_locale - {op_user_locale}
   op_user_profile_name - {op_user_profile_name}
-  op_base_url - {op_base_url}
   op_view_type - {op_view_type}
   op_view_name - {op_view_name}
   op_object_type_name - {op_object_type_name}
   op_object_id - {op_object_id}
   op_object_name - {op_object_name}
   op_workflow_stage - {op_workflow_stage}
-  op_auth_header - {op_auth_header}
 guidelines:
 - display_name: Object Type Catalog
   condition: when requesting object types catalog

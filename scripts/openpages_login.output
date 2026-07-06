@@ -1,0 +1,58 @@
+===================================================================
+ OpenPages login flow
+ Base URL : https://geopost-uat01.op.ibmcloud.com/openpages
+ Username : pradier.j@fr.ibm.com
+===================================================================
+
+[1/4] GET /logon.jsp — obtain initial session cookie
+      Status  : HTTP/2 200 
+      OPJSESSIONID : 0000Uf95TZTa2DJyA2RbJ0u6TL1:3e...
+
+[2/4] POST /j_security_check — submit credentials
+      Status  : HTTP/2 302 
+      Redirect: https://geopost-uat01.op.ibmcloud.com/openpages/
+      OPLtpaToken2 : 3+ekhdrS+5HQzboF99k8...
+
+[3/4] GET https://geopost-uat01.op.ibmcloud.com/openpages/ — follow post-login redirect
+      Status  : HTTP/2 302 
+      Redirect: https://geopost-uat01.op.ibmcloud.com/openpages/singlesignon.do
+
+[4/4] GET https://geopost-uat01.op.ibmcloud.com/openpages/singlesignon.do — establish full session
+      Status        : HTTP/2 200 
+      OPJSESSIONID  : 0000Q-AszTpOVZI1oRLFBlKQk1k:3e...
+      OPToken       : 669027:sox:1:false:true::31
+      OP-XSRF-TOKEN : c214b8d5-7e05-4c1b-b012-f4c88c077471
+
+===================================================================
+ Verifying dashboard access
+ URL: https://geopost-uat01.op.ibmcloud.com/openpages/app/jspview/react/grc
+===================================================================
+
+ Status : HTTP/2 200 
+ Title  : <title>IBM OpenPages</title>
+
+✅  Login successful — session is valid
+
+===================================================================
+ Verifying REST API access
+ URL: https://geopost-uat01.op.ibmcloud.com/openpages/opgrc/api/v2/types/SOXControl
+===================================================================
+
+ Status       : HTTP/2 200 
+ Content-Type : content-type: text/html; charset=ISO-8859-1
+
+❌  REST API — SSO redirect (session expired or wrong auth type)
+    window.location.replace("https://sso.dpdgroup.com/auth/realms/DPD/protocol/openid-connect/auth?scope=openid+email+profile&response_type=code&client_id=PPRD_LYRA&redirect_uri=https%3A%2F%2Fgeopost-uat01.op.ibmcloud.com%2Foidcclient%2Fredirect%2FOIDCconfig&state=001782990476842PB3289aXw")
+
+===================================================================
+ Session cookies (paste into .env as OPENPAGES_SESSION_COOKIES)
+===================================================================
+
+OPENPAGES_SESSION_COOKIES=OPJSESSIONID=0000Q-AszTpOVZI1oRLFBlKQk1k:3e5cea18-564e-464c-ae1a-5e05f87b1b9d; OPToken=669027:sox:1:false:true::31; OP-XSRF-TOKEN=c214b8d5-7e05-4c1b-b012-f4c88c077471
+
+===================================================================
+ Summary
+===================================================================
+ Dashboard : ✅  accessible
+ REST API  : ❌  blocked (WebSEAL ACL — see note above)
+

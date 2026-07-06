@@ -1,6 +1,6 @@
 kind: native
-name: GRC_Agent_Orchestrate_Ontology_base_Sample
-display_name: GRC Agent 
+name: GRC_Agent_Thales
+display_name: Thales GRC Agent 
 description: An agent that can use tools to make updates to OpenPages and answer GRC
   questions based on OpenPages content.
 context_access_enabled: true

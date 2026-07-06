@@ -74,12 +74,24 @@ class Settings(BaseSettings):
     _base_url: str = ""
     # Ensure the base URL has the correct protocol
     OPENPAGES_BASE_URL: str = ""
+    # Optional override for the API root prefix (the segment between OPENPAGES_BASE_URL and /api/v2/...).
+    # When set, this exact value is prepended to every /api/v2/... call instead of the default /opgrc.
+    # Use when the API is accessible at a different path than the default, e.g.:
+    #   Default (most servers):  <base_url>/opgrc/api/v2/...
+    #   Some IBM Cloud servers:  <base_url>/openpages/opgrc/api/v2/...  → set OPENPAGES_API_ROOT=/openpages/opgrc
+    # When empty, /opgrc is used for standard deployments and -opgrc for CP4D.
+    OPENPAGES_API_ROOT: str = ""
     OPENPAGES_AUTHENTICATION_TYPE: str = "basic"
     OPENPAGES_USERNAME: str = ""
     OPENPAGES_PASSWORD: str = ""
     OPENPAGES_APIKEY: str = ""
     OPENPAGES_AUTHENTICATION_URL: str = ""
     OPENPAGES_INSTANCE_NAME: str = ""  # For CP4D deployments
+    # OIDC / Keycloak client credentials (optional – only needed for OIDC auth)
+    OPENPAGES_OIDC_CLIENT_ID: str = ""
+    OPENPAGES_OIDC_CLIENT_SECRET: str = ""
+    # Cookie-based session auth: raw "Cookie:" header value copied from browser DevTools
+    OPENPAGES_SESSION_COOKIES: str = ""
 
     # Server settings (with sensible defaults)
     HOST: str = "0.0.0.0"
@@ -187,6 +199,22 @@ class Settings(BaseSettings):
         # Process base URL to ensure it has the correct protocol
         if self.OPENPAGES_BASE_URL and not (self.OPENPAGES_BASE_URL.startswith('http://') or self.OPENPAGES_BASE_URL.startswith('https://')):
             self.OPENPAGES_BASE_URL = f"https://{self.OPENPAGES_BASE_URL}"
+
+        # Strip WebSEAL / SSO login-page suffixes that users sometimes copy from the browser.
+        # e.g. https://host/openpages/logon.jsp  →  https://host/openpages
+        _LOGIN_SUFFIXES = ("/logon.jsp", "/logon.jsp/")
+        if self.OPENPAGES_BASE_URL:
+            for _suffix in _LOGIN_SUFFIXES:
+                if self.OPENPAGES_BASE_URL.endswith(_suffix):
+                    _cleaned = self.OPENPAGES_BASE_URL[: -len(_suffix)]
+                    import logging as _logging
+                    _logging.getLogger(__name__).warning(
+                        f"OPENPAGES_BASE_URL contains a login-page suffix ('{_suffix}'). "
+                        f"Stripping it automatically: '{self.OPENPAGES_BASE_URL}' → '{_cleaned}'. "
+                        "Please update your .env to avoid this warning."
+                    )
+                    self.OPENPAGES_BASE_URL = _cleaned
+                    break
         
         # Load object types from JSON file (non-blocking)
         self._load_object_types()
@@ -218,14 +246,25 @@ class Settings(BaseSettings):
             )
         
         # Validate authentication type
-        if self.OPENPAGES_AUTHENTICATION_TYPE not in ["basic", "bearer"]:
+        if self.OPENPAGES_AUTHENTICATION_TYPE not in ["basic", "bearer", "cookie"]:
             errors.append(
-                f"OPENPAGES_AUTHENTICATION_TYPE must be 'basic' or 'bearer', got '{self.OPENPAGES_AUTHENTICATION_TYPE}'. "
+                f"OPENPAGES_AUTHENTICATION_TYPE must be 'basic', 'bearer', or 'cookie', "
+                f"got '{self.OPENPAGES_AUTHENTICATION_TYPE}'. "
                 "Please set it in your .env file."
             )
-        
+
         # Validate authentication credentials based on type
-        if self.OPENPAGES_AUTHENTICATION_TYPE == "basic":
+        if self.OPENPAGES_AUTHENTICATION_TYPE == "cookie":
+            has_static_cookies = bool(self.OPENPAGES_SESSION_COOKIES)
+            has_credentials    = bool(self.OPENPAGES_USERNAME and self.OPENPAGES_PASSWORD)
+            if not has_static_cookies and not has_credentials:
+                errors.append(
+                    "Cookie authentication requires either:\n"
+                    "  - OPENPAGES_USERNAME + OPENPAGES_PASSWORD (auto-login at startup), or\n"
+                    "  - OPENPAGES_SESSION_COOKIES (pre-obtained Cookie header value from browser DevTools).\n"
+                    "The recommended approach is to set USERNAME + PASSWORD and let the server log in automatically."
+                )
+        elif self.OPENPAGES_AUTHENTICATION_TYPE == "basic":
             if not self.OPENPAGES_USERNAME or not self.OPENPAGES_PASSWORD:
                 errors.append(
                     "OPENPAGES_USERNAME and OPENPAGES_PASSWORD are required for basic authentication. "
@@ -238,28 +277,33 @@ class Settings(BaseSettings):
                     "Please set it in your .env file. "
                     "Example: OPENPAGES_AUTHENTICATION_URL=https://iam.cloud.ibm.com/identity/token"
                 )
-            
-            # Check if this is CP4D authentication
-            is_cp4d = (
-                self.OPENPAGES_AUTHENTICATION_URL and
-                ('/icp4d-api/v1/authorize' in self.OPENPAGES_AUTHENTICATION_URL
-                 in self.OPENPAGES_AUTHENTICATION_URL)
-            )
-            
-            if is_cp4d:
-                # CP4D uses username/password
-                if not self.OPENPAGES_USERNAME or not self.OPENPAGES_PASSWORD:
-                    errors.append(
-                        "OPENPAGES_USERNAME and OPENPAGES_PASSWORD are required for CP4D authentication. "
-                        "Please set them in your .env file."
-                    )
             else:
-                # IBM Cloud IAM/MCSP uses API key
-                if not self.OPENPAGES_APIKEY:
-                    errors.append(
-                        "OPENPAGES_APIKEY is required for bearer authentication (IBM Cloud/MCSP). "
-                        "Please set it in your .env file."
-                    )
+                from src.app.auth.token_exchange import detect_auth_type as _detect_auth
+                _bearer_kind = _detect_auth(self.OPENPAGES_AUTHENTICATION_URL)
+
+                if _bearer_kind == 'cp4d':
+                    if not self.OPENPAGES_USERNAME or not self.OPENPAGES_PASSWORD:
+                        errors.append(
+                            "OPENPAGES_USERNAME and OPENPAGES_PASSWORD are required for CP4D authentication. "
+                            "Please set them in your .env file."
+                        )
+                elif _bearer_kind == 'oidc':
+                    # OIDC: needs username+password OR client_id+client_secret
+                    has_user = self.OPENPAGES_USERNAME and self.OPENPAGES_PASSWORD
+                    has_client = self.OPENPAGES_OIDC_CLIENT_ID and self.OPENPAGES_OIDC_CLIENT_SECRET
+                    if not has_user and not has_client:
+                        errors.append(
+                            "OIDC authentication requires credentials. Set either:\n"
+                            "  - OPENPAGES_USERNAME + OPENPAGES_PASSWORD (password grant), or\n"
+                            "  - OPENPAGES_OIDC_CLIENT_ID + OPENPAGES_OIDC_CLIENT_SECRET (client_credentials grant)."
+                        )
+                else:
+                    # IBM Cloud IAM / MCSP use API key
+                    if not self.OPENPAGES_APIKEY:
+                        errors.append(
+                            "OPENPAGES_APIKEY is required for bearer authentication (IBM Cloud/MCSP). "
+                            "Please set it in your .env file."
+                        )
         
         # Validate port number
         if not (1 <= self.PORT <= 65535):

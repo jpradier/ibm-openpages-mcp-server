@@ -76,7 +76,9 @@ class MCPServer:
                 self.settings.OPENPAGES_APIKEY,
                 self.settings.OPENPAGES_AUTHENTICATION_URL,
                 custom_settings=self.settings,
-                instance_name=self.settings.OPENPAGES_INSTANCE_NAME
+                instance_name=self.settings.OPENPAGES_INSTANCE_NAME,
+                oidc_client_id=self.settings.OPENPAGES_OIDC_CLIENT_ID or None,
+                oidc_client_secret=self.settings.OPENPAGES_OIDC_CLIENT_SECRET or None,
             )
             logger.debug("OpenPages client initialized successfully")
         except Exception as e:
