@@ -99,7 +99,7 @@ class RequestProcessor:
         result = {
             "protocolVersion": "2025-03-26",
             "serverInfo": {
-                "name": "local-mcp-server",
+                "name": "openpages-mcp-server",
                 "version": self.server_version,
                 "description": "A local MCP server for IBM OpenPages integration"
             },

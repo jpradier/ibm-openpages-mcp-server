@@ -20,7 +20,7 @@ context_variables:
 restrictions: editable
 memory_enabled: true
 supported_apps: []
-llm: virtual-model/openai/gpt-5.4-mini
+llm: groq/openai/gpt-oss-120b
 style: react
 hide_reasoning: false
 instructions: |-
