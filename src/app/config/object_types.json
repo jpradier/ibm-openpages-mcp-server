@@ -552,6 +552,190 @@
         ],
         "_comment": "USED BY: Type-based query_vulnerabilities tool ONLY. Common vulnerability filters"
       }
+    },
+    {
+      "type_id": "SOXBusEntity",
+      "tool_prefix": "business_entity",
+      "display_name": "Business Entity",
+      "path_prefix": "BusinessEntities",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a business entity in OpenPages. Automatically determines whether to insert a new business entity or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve business entities from OpenPages. Supports filtering by name, owner, and custom field filters. Returns business entity details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_business_entity tool. Include all fields for comprehensive business entity data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_business_entities tool ONLY. Common business entity filters"
+      }
+    },
+    {
+      "type_id": "SOXProcess",
+      "tool_prefix": "process",
+      "display_name": "Process",
+      "path_prefix": "Processes",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a process in OpenPages. Automatically determines whether to insert a new process or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve processes from OpenPages. Supports filtering by name, owner, and custom field filters. Returns process details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_process tool. Include all fields for comprehensive process data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_processes tool ONLY. Common process filters"
+      }
+    },
+    {
+      "type_id": "SOXPolicy",
+      "tool_prefix": "policy",
+      "display_name": "Policy",
+      "path_prefix": "Policies",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a policy in OpenPages. Automatically determines whether to insert a new policy or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve policies from OpenPages. Supports filtering by name, owner, and custom field filters. Returns policy details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_policy tool. Include all fields for comprehensive policy data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_policies tool ONLY. Common policy filters"
+      }
+    },
+    {
+      "type_id": "SOXTestPlan",
+      "tool_prefix": "test_plan",
+      "display_name": "Test Plan",
+      "path_prefix": "TestPlans",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a test plan in OpenPages. Automatically determines whether to insert a new test plan or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve test plans from OpenPages. Supports filtering by name, owner, and custom field filters. Returns test plan details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_test_plan tool. Include all fields for comprehensive test plan data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_test_plans tool ONLY. Common test plan filters"
+      }
+    },
+    {
+      "type_id": "SOXTest",
+      "tool_prefix": "test_result",
+      "display_name": "Test Result",
+      "path_prefix": "TestResults",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a test result in OpenPages. Automatically determines whether to insert a new test result or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve test results from OpenPages. Supports filtering by name, owner, and custom field filters. Returns test result details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_test_result tool. Include all fields for comprehensive test result data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_test_results tool ONLY. Common test result filters"
+      }
+    },
+    {
+      "type_id": "CompliancePlan",
+      "tool_prefix": "compliance_plan",
+      "display_name": "Compliance Plan",
+      "path_prefix": "CompliancePlans",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a compliance plan in OpenPages. Automatically determines whether to insert a new compliance plan or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve compliance plans from OpenPages. Supports filtering by name, owner, and custom field filters. Returns compliance plan details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_compliance_plan tool. Include all fields for comprehensive compliance plan data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_compliance_plans tool ONLY. Common compliance plan filters"
+      }
+    },
+    {
+      "type_id": "ComplianceTheme",
+      "tool_prefix": "compliance_theme",
+      "display_name": "Compliance Theme",
+      "path_prefix": "ComplianceThemes",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a compliance theme in OpenPages. Automatically determines whether to insert a new compliance theme or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve compliance themes from OpenPages. Supports filtering by name, owner, and custom field filters. Returns compliance theme details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_compliance_theme tool. Include all fields for comprehensive compliance theme data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_compliance_themes tool ONLY. Common compliance theme filters"
+      }
+    },
+    {
+      "type_id": "MandateEvaluation",
+      "tool_prefix": "requirements_evaluation",
+      "display_name": "Requirements Evaluation",
+      "path_prefix": "RequirementsEvaluations",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a requirements evaluation in OpenPages. Automatically determines whether to insert a new requirements evaluation or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve requirements evaluations from OpenPages. Supports filtering by name, owner, and custom field filters. Returns requirements evaluation details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_requirements_evaluation tool. Include all fields for comprehensive requirements evaluation data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_requirements_evaluations tool ONLY. Common requirements evaluation filters"
+      }
     }
   ]
 }
