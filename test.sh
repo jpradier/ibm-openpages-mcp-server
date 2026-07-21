@@ -1,4 +1,9 @@
-curl -X POST https://openpages-mcp-server.2c20hyggoq5p.us-south.codeengine.appdomain.cloud/mcp \
+# Load OPENPAGES_MCP_URL from .env file
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
+curl -X POST "${OPENPAGES_MCP_URL}/mcp" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc":"2.0",

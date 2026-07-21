@@ -73,11 +73,28 @@
       "resource_fields": {
         "include_all_fields": false,
         "fields": [
-          "OPSS-Rsk:Status",
-          "OPSS-Rsk:RiskLevel",
-          "OPSS-Rsk:Owner"
+          "OPSS-Rsk:Owner",
+          "OPSS-Risk:Status",
+          "OPSS-Risk-Qual:Inherent Risk Rating",
+          "OPSS-Risk-Qual:Residual Risk Rating",
+          "TH-Risk:Type of Assessment",
+          "TH-Risk:Availability",
+          "TH-Risk:Integrity",
+          "TH-Risk:Confidentiality",
+          "TH-Risk:Authenticity",
+          "TH-Risk:Accountability",
+          "TH-Risk:CurrentAvailability",
+          "TH-Risk:CurrentIntegrity",
+          "TH-Risk:CurrentConfidentiality",
+          "TH-Risk:CurrentAuthenticity",
+          "TH-Risk:CurrentAccountability",
+          "TH-Risk:TargetAvailability",
+          "TH-Risk:TargetIntegrity",
+          "TH-Risk:TargetConfidentiality",
+          "TH-Risk:TargetAuthenticity",
+          "TH-Risk:TargetAccountability"
         ],
-        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_risk tool. Individual fields listed. Could use '@OPSS-Rsk' to include all OPSS-Rsk fields, or mix: ['@OPSS-Rsk', 'OtherGroup:Field']"
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_risk tool. Includes TH-Risk SRA fields (Potential/Current/Target for A, I, C, Auth, Acc)"
       },
       "type_based_query_filters": {
         "fields": [
@@ -234,9 +251,43 @@
         "query": "Search and retrieve assets (resources) from OpenPages. Supports filtering by name, owner, and custom field filters. Returns asset details including ID, name, description, and selected fields."
       },
       "resource_fields": {
-        "include_all_fields": true,
-        "fields": [],
-        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_asset tool. Include all fields for comprehensive asset data"
+        "include_all_fields": false,
+        "fields": [
+          "OPSS-CIA:Availability",
+          "OPSS-CIA:Confidentiality",
+          "OPSS-CIA:Criticality",
+          "OPSS-CIA:Integrity",
+          "OPSS-Res:Resource Type",
+          "OPSS-Res:Data Classification Level",
+          "OPSS-Res:Support",
+          "TH-Asset:Risk Rating",
+          "TH-Asset:Risk Under Control",
+          "TH-Asset:Deployment Type",
+          "TH-Asset:Network Zone",
+          "TH-Asset:Type of component",
+          "TH-Asset:Applicable Certification",
+          "TH-Asset:Topology",
+          "TH-Asset:Accreditation Status",
+          "TH-Asset:Potential Risk Rating",
+          "TH-Asset:Asset Potential Risk Availability",
+          "TH-Asset:Asset Potential Risk Integrity",
+          "TH-Asset:Asset Potential Risk Confidentiality",
+          "TH-Asset:Asset Potential Risk Authenticity",
+          "TH-Asset:Asset Potential Risk Accountability",
+          "TH-Asset:Residual Risk Availability - C",
+          "TH-Asset:Residual Risk Integrity - C",
+          "TH-Asset:Residual Risk Confidentiality - C",
+          "TH-Asset:Residual Risk Authenticity - C",
+          "TH-Asset:Residual Risk Accountability - C",
+          "TH-Asset:Residual Risk Availability - T",
+          "TH-Asset:Residual Risk Integrity - T",
+          "TH-Asset:Residual Risk Confidentiality - T",
+          "TH-Asset:Residual Risk Authenticity - T",
+          "TH-Asset:Residual Risk Accountability - T",
+          "TH-Asset:Residual Risk Rating - Current",
+          "TH-Asset:Residual Risk Rating - Target"
+        ],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_asset tool. Includes TH-Asset SRA risk fields for all three phases (potential/current/target)"
       },
       "type_based_query_filters": {
         "fields": [
