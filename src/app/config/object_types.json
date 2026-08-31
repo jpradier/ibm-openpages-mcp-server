@@ -71,30 +71,9 @@
         "query": "Search and retrieve risks from OpenPages. Supports filtering by name, owner, and custom field filters. Returns risk details including ID, name, description, and selected fields."
       },
       "resource_fields": {
-        "include_all_fields": false,
-        "fields": [
-          "OPSS-Rsk:Owner",
-          "OPSS-Risk:Status",
-          "OPSS-Risk-Qual:Inherent Risk Rating",
-          "OPSS-Risk-Qual:Residual Risk Rating",
-          "TH-Risk:Type of Assessment",
-          "TH-Risk:Availability",
-          "TH-Risk:Integrity",
-          "TH-Risk:Confidentiality",
-          "TH-Risk:Authenticity",
-          "TH-Risk:Accountability",
-          "TH-Risk:CurrentAvailability",
-          "TH-Risk:CurrentIntegrity",
-          "TH-Risk:CurrentConfidentiality",
-          "TH-Risk:CurrentAuthenticity",
-          "TH-Risk:CurrentAccountability",
-          "TH-Risk:TargetAvailability",
-          "TH-Risk:TargetIntegrity",
-          "TH-Risk:TargetConfidentiality",
-          "TH-Risk:TargetAuthenticity",
-          "TH-Risk:TargetAccountability"
-        ],
-        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_risk tool. Includes TH-Risk SRA fields (Potential/Current/Target for A, I, C, Auth, Acc)"
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_risk tool. Include all fields for comprehensive risk data"
       },
       "type_based_query_filters": {
         "fields": [
@@ -251,43 +230,9 @@
         "query": "Search and retrieve assets (resources) from OpenPages. Supports filtering by name, owner, and custom field filters. Returns asset details including ID, name, description, and selected fields."
       },
       "resource_fields": {
-        "include_all_fields": false,
-        "fields": [
-          "OPSS-CIA:Availability",
-          "OPSS-CIA:Confidentiality",
-          "OPSS-CIA:Criticality",
-          "OPSS-CIA:Integrity",
-          "OPSS-Res:Resource Type",
-          "OPSS-Res:Data Classification Level",
-          "OPSS-Res:Support",
-          "TH-Asset:Risk Rating",
-          "TH-Asset:Risk Under Control",
-          "TH-Asset:Deployment Type",
-          "TH-Asset:Network Zone",
-          "TH-Asset:Type of component",
-          "TH-Asset:Applicable Certification",
-          "TH-Asset:Topology",
-          "TH-Asset:Accreditation Status",
-          "TH-Asset:Potential Risk Rating",
-          "TH-Asset:Asset Potential Risk Availability",
-          "TH-Asset:Asset Potential Risk Integrity",
-          "TH-Asset:Asset Potential Risk Confidentiality",
-          "TH-Asset:Asset Potential Risk Authenticity",
-          "TH-Asset:Asset Potential Risk Accountability",
-          "TH-Asset:Residual Risk Availability - C",
-          "TH-Asset:Residual Risk Integrity - C",
-          "TH-Asset:Residual Risk Confidentiality - C",
-          "TH-Asset:Residual Risk Authenticity - C",
-          "TH-Asset:Residual Risk Accountability - C",
-          "TH-Asset:Residual Risk Availability - T",
-          "TH-Asset:Residual Risk Integrity - T",
-          "TH-Asset:Residual Risk Confidentiality - T",
-          "TH-Asset:Residual Risk Authenticity - T",
-          "TH-Asset:Residual Risk Accountability - T",
-          "TH-Asset:Residual Risk Rating - Current",
-          "TH-Asset:Residual Risk Rating - Target"
-        ],
-        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_asset tool. Includes TH-Asset SRA risk fields for all three phases (potential/current/target)"
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_asset tool. Include all fields for comprehensive asset data"
       },
       "type_based_query_filters": {
         "fields": [
@@ -786,6 +731,167 @@
           "Owner"
         ],
         "_comment": "USED BY: Type-based query_requirements_evaluations tool ONLY. Common requirements evaluation filters"
+      }
+    },
+    {
+      "type_id": "SOXTask",
+      "tool_prefix": "task",
+      "display_name": "Task",
+      "path_prefix": "Tasks",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a task in OpenPages. Automatically determines whether to insert a new task or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve tasks from OpenPages. Supports filtering by name, owner, and custom field filters. Returns task details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_task tool. Include all fields for comprehensive task data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_tasks tool ONLY. Common task filters"
+      }
+    },
+    {
+      "type_id": "Investment Project",
+      "tool_prefix": "investment_project",
+      "display_name": "Investment Project",
+      "path_prefix": "InvestmentProjects",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an investment project in OpenPages. Automatically determines whether to insert a new investment project or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve investment projects from OpenPages. Supports filtering by name, owner, and custom field filters. Returns investment project details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_investment_project tool. Include all fields for comprehensive investment project data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_investment_projects tool ONLY. Common investment project filters"
+      }
+    },
+    {
+      "type_id": "ScenarioAnalysis",
+      "tool_prefix": "scenario_analysis",
+      "display_name": "Scenario Analysis",
+      "path_prefix": "ScenarioAnalyses",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a scenario analysis in OpenPages. Automatically determines whether to insert a new scenario analysis or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve scenario analyses from OpenPages. Supports filtering by name, owner, and custom field filters. Returns scenario analysis details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_scenario_analysis tool. Include all fields for comprehensive scenario analysis data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_scenario_analyses tool ONLY. Common scenario analysis filters"
+      }
+    },
+    {
+      "type_id": "ScenarioResult",
+      "tool_prefix": "scenario_result",
+      "display_name": "Scenario Result",
+      "path_prefix": "ScenarioResults",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a scenario result in OpenPages. Automatically determines whether to insert a new scenario result or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve scenario results from OpenPages. Supports filtering by name, owner, and custom field filters. Returns scenario result details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_scenario_result tool. Include all fields for comprehensive scenario result data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_scenario_results tool ONLY. Common scenario result filters"
+      }
+    },
+    {
+      "type_id": "Vendor",
+      "tool_prefix": "vendor",
+      "display_name": "Vendor",
+      "path_prefix": "Vendors",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a vendor in OpenPages. Automatically determines whether to insert a new vendor or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve vendors from OpenPages. Supports filtering by name, owner, and custom field filters. Returns vendor details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_vendor tool. Include all fields for comprehensive vendor data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_vendors tool ONLY. Common vendor filters"
+      }
+    },
+    {
+      "type_id": "StrategicObjective",
+      "tool_prefix": "strategic_objective",
+      "display_name": "Strategic Objective",
+      "path_prefix": "StrategicObjectives",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a strategic objective in OpenPages. Automatically determines whether to insert a new strategic objective or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve strategic objectives from OpenPages. Supports filtering by name, owner, and custom field filters. Returns strategic objective details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_strategic_objective tool. Include all fields for comprehensive strategic objective data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_strategic_objectives tool ONLY. Common strategic objective filters"
+      }
+    },
+    {
+      "type_id": "Objective",
+      "tool_prefix": "objective",
+      "display_name": "Objective",
+      "path_prefix": "Objectives",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an objective in OpenPages. Automatically determines whether to insert a new objective or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve objectives from OpenPages. Supports filtering by name, owner, and custom field filters. Returns objective details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_objective tool. Include all fields for comprehensive objective data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_objectives tool ONLY. Common objective filters"
       }
     }
   ]
