@@ -199,7 +199,7 @@
     {
       "type_id": "RiskEntity",
       "tool_prefix": "it_system",
-      "display_name": "IT System",
+      "display_name": "Application Domain",
       "path_prefix": "ITSystems",
       "namespace": "openpages",
       "tool_descriptions": {
@@ -222,7 +222,7 @@
     {
       "type_id": "Resource",
       "tool_prefix": "asset",
-      "display_name": "Asset",
+      "display_name": "Processing Register",
       "path_prefix": "Resources",
       "namespace": "openpages",
       "tool_descriptions": {
@@ -892,6 +892,75 @@
           "Owner"
         ],
         "_comment": "USED BY: Type-based query_objectives tool ONLY. Common objective filters"
+      }
+    },
+    {
+      "type_id": "RiskSubEntity",
+      "tool_prefix": "application_and_component",
+      "display_name": "Application and component",
+      "path_prefix": "Applications and Components",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an application and component in OpenPages. Automatically determines whether to insert a new application and component or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve applications and components from OpenPages. Supports filtering by name, owner, and custom field filters. Returns application and component details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_application_and_component tool. Include all fields for comprehensive application and component data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_applications_and_components tool ONLY. Common application and component filters"
+      }
+    },
+    {
+      "type_id": "Incident",
+      "tool_prefix": "incident",
+      "display_name": "Incident",
+      "path_prefix": "Incidents",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an incident in OpenPages. Automatically determines whether to insert a new incident or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve incidents from OpenPages. Supports filtering by name, owner, and custom field filters. Returns incident details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_incident tool. Include all fields for comprehensive incident data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_incidents tool ONLY. Common incident filters"
+      }
+    },
+    {
+      "type_id": "Model",
+      "tool_prefix": "model",
+      "display_name": "Model",
+      "path_prefix": "Models",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a model in OpenPages. Automatically determines whether to insert a new model or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve models from OpenPages. Supports filtering by name, owner, and custom field filters. Returns model details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_model tool. Include all fields for comprehensive model data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_models tool ONLY. Common model filters"
       }
     }
   ]
