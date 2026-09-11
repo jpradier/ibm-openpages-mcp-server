@@ -787,6 +787,52 @@
         ],
         "_comment": "USED BY: Type-based query_requirements_evaluations tool ONLY. Common requirements evaluation filters"
       }
+    },
+    {
+      "type_id": "Plan",
+      "tool_prefix": "plan",
+      "display_name": "Plan",
+      "path_prefix": "Plans",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a plan in OpenPages. Automatically determines whether to insert a new plan or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve plans from OpenPages. Supports filtering by name, owner, and custom field filters. Returns plan details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_plan tool. Include all fields for comprehensive plan data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_plans tool ONLY. Common plan filters"
+      }
+    },
+    {
+      "type_id": "Auditor",
+      "tool_prefix": "auditor",
+      "display_name": "Auditor",
+      "path_prefix": "Auditors",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update an auditor in OpenPages. Automatically determines whether to insert a new auditor or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve auditors from OpenPages. Supports filtering by name, owner, and custom field filters. Returns auditor details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_auditor tool. Include all fields for comprehensive auditor data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_auditors tool ONLY. Common auditor filters"
+      }
     }
   ]
 }
