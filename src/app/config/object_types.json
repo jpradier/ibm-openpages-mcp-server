@@ -651,7 +651,7 @@
       }
     },
     {
-      "type_id": "SOXPolicy",
+      "type_id": "Policy",
       "tool_prefix": "policy",
       "display_name": "Policy",
       "path_prefix": "Policies",
