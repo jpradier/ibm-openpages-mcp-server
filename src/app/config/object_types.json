@@ -767,6 +767,52 @@
         ],
         "_comment": "USED BY: Type-based query_auditors tool ONLY. Common auditor filters"
       }
+    },
+    {
+      "type_id": "Campaign",
+      "tool_prefix": "campaign",
+      "display_name": "Campaign",
+      "path_prefix": "Campaigns",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a campaign in OpenPages. Automatically determines whether to insert a new campaign or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve campaigns from OpenPages. Supports filtering by name, owner, and custom field filters. Returns campaign details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_campaign tool. Include all fields for comprehensive campaign data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_campaigns tool ONLY. Common campaign filters"
+      }
+    },
+    {
+      "type_id": "LossEvent",
+      "tool_prefix": "loss_event",
+      "display_name": "Fiche Incident",
+      "path_prefix": "LossEvents",
+      "namespace": "openpages",
+      "tool_descriptions": {
+        "upsert": "Create or update a loss event in OpenPages. Automatically determines whether to insert a new loss event or update an existing one based on provided identifiers (id, path, or name).",
+        "query": "Search and retrieve loss events from OpenPages. Supports filtering by name, owner, and custom field filters. Returns loss event details including ID, name, description, and selected fields."
+      },
+      "resource_fields": {
+        "include_all_fields": true,
+        "fields": [],
+        "_comment": "USED BY: Published resources (all modes) + Type-based upsert_loss_event tool. Include all fields for comprehensive loss event data"
+      },
+      "type_based_query_filters": {
+        "fields": [
+          "Status",
+          "Owner"
+        ],
+        "_comment": "USED BY: Type-based query_loss_events tool ONLY. Common loss event filters"
+      }
     }
   ]
 }

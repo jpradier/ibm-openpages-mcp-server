@@ -207,14 +207,20 @@ class ResourceHandlers:
         
         type_id = uri.replace("openpages://schema/", "")
         
-        # Strip any query parameters from the URI
-        # (e.g., "SOXIssue?mode=full" -> "SOXIssue")
+        # Extract mode from params or query parameter in URI
+        mode = params.get("mode", "compact")
         if "?" in type_id:
+            query_part = type_id.split("?", 1)[1]
             type_id = type_id.split("?")[0]
-            logger.debug(f"Stripped query parameters from URI, extracted type_id: {type_id}")
+            for param in query_part.split("&"):
+                if "=" in param:
+                    k, v = param.split("=", 1)
+                    if k == "mode":
+                        mode = v
+            logger.debug(f"Extracted mode '{mode}' and type_id '{type_id}' from URI query params")
         
-        # Check formatted schema cache first
-        cache_key = type_id
+        # Check formatted schema cache first (keyed by type_id and mode)
+        cache_key = f"{type_id}:{mode}"
         cached_schema = self._get_cached_schema(cache_key)
         if cached_schema:
             self._schema_cache_hits += 1
@@ -247,9 +253,16 @@ class ResourceHandlers:
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
             
-            # Build the full schema resource content
-            schema_content = self._build_schema_content(type_id, type_def, obj_config)
-            logger.info(f"Built full schema for {type_id}")
+            # Build the schema resource content according to mode
+            if mode == "minimal":
+                schema_content = self._build_minimal_schema_content(type_id, type_def, obj_config)
+                logger.info(f"Built minimal schema for {type_id}")
+            elif mode == "compact":
+                schema_content = self._build_compact_schema_content(type_id, type_def, obj_config)
+                logger.info(f"Built compact schema for {type_id}")
+            else:
+                schema_content = self._build_schema_content(type_id, type_def, obj_config)
+                logger.info(f"Built full schema for {type_id}")
             
             # Use minified JSON for AI agent consumption (25% size reduction)
             # AI agents parse JSON programmatically and don't need human-readable formatting
@@ -619,6 +632,7 @@ class ResourceHandlers:
             if is_required or is_system:
                 field_info = {
                     "name": field_name,
+                    "label": field.get("localized_label") or field.get("label") or field_name,
                     "data_type": field.get("data_type", "STRING_TYPE"),
                     "required": is_required,
                     "read_only": field.get("read_only", False)
@@ -685,12 +699,16 @@ class ResourceHandlers:
         # Extract field definitions
         field_definitions = type_def.get("field_definitions", [])
         
-        # Build minimal field map: just name -> type
+        # Build minimal field map: name -> {type, label}
         fields = {}
         for field in field_definitions:
             field_name = field.get("name")
             if field_name:
-                fields[field_name] = field.get("data_type", "STRING_TYPE")
+                label = field.get("localized_label") or field.get("label")
+                if label and label != field_name:
+                    fields[field_name] = f"{field.get('data_type', 'STRING_TYPE')} ({label})"
+                else:
+                    fields[field_name] = field.get("data_type", "STRING_TYPE")
         
         # Build minimal schema
         schema_content = {

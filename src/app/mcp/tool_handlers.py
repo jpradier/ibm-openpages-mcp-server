@@ -1280,9 +1280,10 @@ class ToolHandlers:
             }
         
         logger.info(f"Executing get_resource tool for URI: {uri}")
+        mode = cleaned_args.get("mode", "compact")
         try:
-            # Call the resource handler's read method
-            result = await self.resource_handlers.handle_read_resource({"uri": uri})
+            # Call the resource handler's read method with mode parameter
+            result = await self.resource_handlers.handle_read_resource({"uri": uri, "mode": mode})
             
             # Extract the content from the result
             if "contents" in result and len(result["contents"]) > 0:
