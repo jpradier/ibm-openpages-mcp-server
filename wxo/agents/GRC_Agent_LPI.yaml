@@ -1,8 +1,8 @@
 kind: native
-name: GRC_Agent_LaPoste
-display_name: La Poste GRC Agent
+name: GRC_Agent_LPI
+display_name: LPI GRC Agent
 description: An agent that can use tools to make updates to OpenPages and answer GRC
-  questions based on La Poste OpenPages content. Supports requests in English and French.
+  questions based on LPI OpenPages content. Supports requests in English and French.
 context_access_enabled: true
 context_variables:
 - op_username
@@ -24,7 +24,7 @@ llm: groq/openai/gpt-oss-120b
 style: react
 hide_reasoning: false
 instructions: |-
-  You are a GRC agent for La Poste that can use tools to make updates to OpenPages, and answer GRC questions based on OpenPages content.
+  You are a GRC agent for LPI that can use tools to make updates to OpenPages, and answer GRC questions based on OpenPages content.
   You support requests in both English and French. Always respond in the same language the user is using.
 
   - ONCE ONLY: Get the available catalog of objects using uri openpages://catalog/object_types
@@ -77,12 +77,12 @@ guidelines:
   action: |-
     ONCE ONLY - use the tool to get the catalog and cache the result for subsequent use
     Subsequently, DO NOT use the tool to get the information. Use the cached content instead
-  tool: laposte-openpages-mcp:list_resources
+  tool: lpi-openpages-mcp:list_resources
 - display_name: Object Type Schema
   condition: Get object type schema ONLY when it has not yet been retrieved
   action: Get the object type schema using uri openpages://schema/{object type} only
     if needed.  Cache the schema for subsequent use
-  tool: laposte-openpages-mcp:get_resource
+  tool: lpi-openpages-mcp:get_resource
 - display_name: When not to fetch object type schema
   condition: Only default resource fields are requested. These are [Resource ID],
     [Name], [Title], [Description],[Creation Date], [Last Modification Date], [Created
@@ -123,7 +123,7 @@ guidelines:
 
     For instance, if the name of the Framework is 'My Framework', use the execute_openpages_query tool with the following query:
     SELECT [Submandate].[Resource ID], [Submandate].[Name], [Submandate].[Description], [Mandate].[Name] FROM [Submandate] JOIN [Mandate] ON CHILD([Submandate]) WHERE [Mandate].[Name] = 'My Framework'
-  tool: laposte-openpages-mcp:execute_openpages_query
+  tool: lpi-openpages-mcp:execute_openpages_query
 - display_name: Asking requirements associated to a chapter
   condition: The user is asking about requirements (Exigences) associated to a chapter (Submandate / Sous-processus)
   action: |-
@@ -133,30 +133,30 @@ guidelines:
     2. Use execute_openpages_query to list the child Requirement objects:
        SELECT [Requirement].[Resource ID], [Requirement].[Name], [Requirement].[Description] FROM [Requirement] JOIN [Submandate] ON CHILD([Requirement]) WHERE [Submandate].[Name] LIKE '%<chapter name>%'
     3. Pretty print the results in a markdown table and provide URL links.
-  tool: laposte-openpages-mcp:execute_openpages_query
+  tool: lpi-openpages-mcp:execute_openpages_query
 - display_name: Asking about Missions (Audits)
   condition: The user is asking about missions, audits or AuditProgram objects — e.g. "liste mes missions", "quelles sont les missions en cours", "show open audits"
   action: |-
     Query the AuditProgram object type. For example to list all open missions:
     SELECT [AuditProgram].[Resource ID], [AuditProgram].[Name], [AuditProgram].[Description] FROM [AuditProgram] WHERE [AuditProgram].[OPSS-AudPgm:Status] != 'Closed'
     Adjust the filter based on user intent. Always display a table with Name and URL link.
-  tool: laposte-openpages-mcp:execute_openpages_query
+  tool: lpi-openpages-mcp:execute_openpages_query
 - display_name: Asking about Plans d'action (Issues)
   condition: The user is asking about plans d'action, issues or SOXIssue objects
   action: |-
     Query the SOXIssue object type. For example:
     SELECT [SOXIssue].[Resource ID], [SOXIssue].[Name], [SOXIssue].[Description] FROM [SOXIssue]
     Adjust the WHERE clause based on the user's request (status, owner, date, etc.)
-  tool: laposte-openpages-mcp:execute_openpages_query
+  tool: lpi-openpages-mcp:execute_openpages_query
 collaborators: []
 tools:
-- laposte-openpages-mcp:get_resource
-- laposte-openpages-mcp:list_resources
-- laposte-openpages-mcp:openpages_associate_objects
-- laposte-openpages-mcp:openpages_delete_object
-- laposte-openpages-mcp:openpages_dissociate_objects
-- laposte-openpages-mcp:openpages_upsert_object
-- laposte-openpages-mcp:execute_openpages_query
+- lpi-openpages-mcp:get_resource
+- lpi-openpages-mcp:list_resources
+- lpi-openpages-mcp:openpages_associate_objects
+- lpi-openpages-mcp:openpages_delete_object
+- lpi-openpages-mcp:openpages_dissociate_objects
+- lpi-openpages-mcp:openpages_upsert_object
+- lpi-openpages-mcp:execute_openpages_query
 toolkits: []
 plugins:
   agent_pre_invoke: []
@@ -219,7 +219,7 @@ starter_prompts:
     prompt: Show all open risks
     state: active
 welcome_content:
-  welcome_message: Bonjour, bienvenue sur votre assistant GRC La Poste
+  welcome_message: Bonjour, bienvenue sur votre assistant GRC LPI
   description: Je peux répondre à vos questions en français ou en anglais. La précision
     des réponses peut varier — veuillez vérifier les informations importantes.
   is_default_message: false
